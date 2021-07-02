@@ -9,6 +9,8 @@ class WatchingStranger():
     def __init__(self):
         # tracker list
         self.trackerTypes = ['BOOSTING', 'MIL', 'KCF', 'TLD', 'MEDIANFLOW', 'GOTURN', 'MOSSE', 'CSRT']
+        # kernel for morphology => 커널 크기를 조절하면 검은 구멍을 메우는 정도가 달라짐
+        self.k = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
         # set rectangle color
         self.roiColor = (0, 255, 0)
         self.dangerColor = (0, 0, 255)
@@ -74,10 +76,14 @@ class WatchingStranger():
         fps = cap.get(cv2.CAP_PROP_FPS)
         roi = np.zeros(shape=5)
 
-        # GaussianBlur 노이즈 제거
-        frame = cv2.GaussianBlur(frame, (0, 0), 1.0)
         # 배경 제거 마스크 계산
         self.fgmask = self.fgbg.apply(frame)
+        # GaussianBlur 노이즈 제거
+        blur = cv2.GaussianBlur(self.fgmask, (0, 0), 1.0)
+        # closing => 희색 오브젝트에 있는 작은 검은색 구멍들을 메우는데 사용
+        closing = cv2.morphologyEx(blur, cv2.MORPH_CLOSE, self.k)
+        # binarization + Otsu thresholding
+        ret, self.fgmask = cv2.threshold(closing, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
         if self.fgmask.mean() != 127:
             self.roiChk = np.transpose(
@@ -208,7 +214,6 @@ class WatchingStranger():
 
             p1 = (int(newbox[0]), int(newbox[1]))
             p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
-            cv2.rectangle(frame, self.originROI[0], self.originROI[1], self.roiColor, 2, 1)     # 기존 roi 사각형 그리기
             cv2.rectangle(frame, p1, p2, self.dangerColor, 2, 1)        # stranger tracker 사각형 그리기
             cv2.putText(frame, '{0:0.1f} Sec'.format((time.time() - self.trackingStartTime)),
                         (int(newbox[0]), int(newbox[1]) + 30), cv2.FONT_HERSHEY_PLAIN, 2, self.dangerColor, 3)
@@ -247,6 +252,7 @@ class WatchingStranger():
                     self.tracking = False
                     # send socket message
 
+                cv2.rectangle(frame, self.originROI[0], self.originROI[1], self.roiColor)  # 기존 roi 사각형 그리기
                 cv2.imshow('frame', frame)
                 cv2.imshow('bgsub', self.fgmask)
                 if cv2.waitKey(1) & 0xff == 27:
