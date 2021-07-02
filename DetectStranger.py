@@ -10,7 +10,8 @@ class WatchingStranger():
         # tracker list
         self.trackerTypes = ['BOOSTING', 'MIL', 'KCF', 'TLD', 'MEDIANFLOW', 'GOTURN', 'MOSSE', 'CSRT']
         # set rectangle color
-        self.color = (0, 0, 255)
+        self.roiColor = (0, 255, 0)
+        self.dangerColor = (0, 0, 255)
 
         # Load Yolo
         self.net = cv2.dnn.readNet("yolov3-spp.weights", "yolov3-spp.cfg")
@@ -24,8 +25,8 @@ class WatchingStranger():
 
         self.x, self.y, self.w, self.h = cv2.selectROI('DangerROI', frame, False)
         if self.w and self.h:
-            self.roi = frame[self.y:self.y + self.h, self.x:self.x + self.w]
-        # cv2.destroyAllWindows()
+            self.originROI = [(self.x, self.y), (self.x+self.w, self.y+self.h)]
+        cv2.destroyAllWindows()
 
         # 배경 제거 객체 생성 --- ①
         self.fgbg = cv2.createBackgroundSubtractorMOG2(varThreshold=100)
@@ -67,6 +68,9 @@ class WatchingStranger():
         return tracker
 
     def CheckStranger(self, frame):
+        '''
+        :return: roi should be returned nparray for if brunch in main func
+        '''
         fps = cap.get(cv2.CAP_PROP_FPS)
         roi = np.zeros(shape=5)
 
@@ -102,8 +106,6 @@ class WatchingStranger():
                     self.detection = False
                     roi = frame[self.y:self.y + self.h, self.x:self.x + self.w]
                     print("Try to Detect Human obj")
-
-                    return roi
 
         return roi
 
@@ -192,12 +194,6 @@ class WatchingStranger():
 
         # draw tracked objects
         for i, newbox in enumerate(boxes):
-            p1 = (int(newbox[0]), int(newbox[1]))
-            p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
-            cv2.rectangle(frame, p1, p2, self.color, 2, 1)
-            cv2.putText(frame, '{0:0.1f} Sec'.format((time.time() - self.trackingStartTime)),
-                        (int(newbox[0]), int(newbox[1]) + 30), cv2.FONT_HERSHEY_PLAIN, 2, self.color, 3)
-
             # 60초에 한 번 tracking 중인 객체가 사람인지 아닌지 판단
             # 프레임에서 벗어났다면 사람이 아니라고 정의
             if (time.time()-self.trackingStartTime)%60 < 0:
@@ -209,6 +205,13 @@ class WatchingStranger():
                 if not self.DetectHuman(reChkROI):
                     self.tracking = False
                     chaseTime = 0
+
+            p1 = (int(newbox[0]), int(newbox[1]))
+            p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
+            cv2.rectangle(frame, self.originROI[0], self.originROI[1], self.roiColor, 2, 1)     # 기존 roi 사각형 그리기
+            cv2.rectangle(frame, p1, p2, self.dangerColor, 2, 1)        # stranger tracker 사각형 그리기
+            cv2.putText(frame, '{0:0.1f} Sec'.format((time.time() - self.trackingStartTime)),
+                        (int(newbox[0]), int(newbox[1]) + 30), cv2.FONT_HERSHEY_PLAIN, 2, self.dangerColor, 3)
 
         return chaseTime
 
@@ -256,4 +259,3 @@ class WatchingStranger():
 if __name__ == '__main__':
     p1 = WatchingStranger()
     p1.main()
-
