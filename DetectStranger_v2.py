@@ -9,6 +9,8 @@ class WatchingStranger():
     def __init__(self):
         # tracker list
         self.trackerTypes = ['BOOSTING', 'MIL', 'KCF', 'TLD', 'MEDIANFLOW', 'GOTURN', 'MOSSE', 'CSRT']
+        # kernel for morphology
+        self.k = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
         # set rectangle color
         self.roiColor = (0, 255, 0)
         self.dangerColor = (0, 0, 255)
@@ -74,25 +76,20 @@ class WatchingStranger():
         fps = cap.get(cv2.CAP_PROP_FPS)
         roi = np.zeros(shape=5)
 
-        # GaussianBlur 노이즈 제거
-        # frame = cv2.GaussianBlur(frame, (0, 0), 1.0)  # original
         roiFrame = frame[self.y:self.y + self.h, self.x:self.x + self.w]
-        roiFrame = cv2.GaussianBlur(roiFrame, (0, 0), 1.0)
+        # erosion => 밝은 노이즈만 침식하기 위함
+        erosion = cv2.erode(roiFrame, self.k)
+        # GaussianBlur 노이즈 제거
+        blur = cv2.GaussianBlur(erosion, (0, 0), 1.0)
+        # binarization + Otsu thresholding
+        ret, roiFrame = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
         # 배경 제거 마스크 계산
         # 미리 설정된 roi만 배경차분으로 움직임 검출
         self.fgmask = self.fgbg.apply(roiFrame)
         # self.fgmask = self.fgbg.apply(frame)  # original
 
         if self.fgmask.mean() != 127:
-            # self.movementInROI = np.transpose(
-            #     np.array(np.where(self.fgmask > 0)))  # 해당 과정에서 0열이 y, 1열이 x로 바뀜 (전치때문 X, 원래의 배열 형태에 의한 것)
-
-            # if self.roiChk.size > 0:
-            #     self.movementInROI = self.roiChk[np.array(np.where(self.y < self.roiChk[:, 0]) and              # 0열 (y값 이상)
-            #                                               np.where(self.roiChk[:, 0] < (self.y + self.h)) and   # 0열 (y+h값 이하)
-            #                                               np.where(self.x < self.roiChk[:, 1]) and              # 1열 (x값 이상)
-            #                                               np.where(self.roiChk[:, 1] < (self.x + self.w)))]     # 1열 (x+w값 이하)
-            # if self.movementInROI.size > 0:     # roi내에서 움직임 검출
             if not self.detection and not self.tracking and (self.detectFrames < (fps * self.detectDuration * self.tolerance)):
                 # roi 안에 디텍션이 되었을 때 detectFrames 카운트
                 self.detectFrames += 1
@@ -108,7 +105,6 @@ class WatchingStranger():
             if self.detection and ((time.time() - self.detectTime) > self.detectDuration):
                 self.detectFrames = 0
                 self.detection = False
-                # roi = frame[self.y:self.y + self.h, self.x:self.x + self.w]
                 roi = roiFrame
                 print("Try to Detect Human obj")
 
