@@ -73,7 +73,7 @@ class WatchingStranger():
         '''
         :return: roi should be returned nparray for if brunch in main func
         '''
-        fps = cap.get(cv2.CAP_PROP_FPS)
+        self.fps = cap.get(cv2.CAP_PROP_FPS)
         roi = np.zeros(shape=5)
 
         roiFrame = frame[self.y:self.y + self.h, self.x:self.x + self.w]
@@ -89,7 +89,7 @@ class WatchingStranger():
         ret, self.fgmask = cv2.threshold(closing, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         if self.fgmask.mean() != 127:
-            if not self.detection and not self.tracking and (self.detectFrames < (fps * self.detectDuration * self.tolerance)):
+            if not self.detection and not self.tracking and (self.detectFrames < (self.fps * self.detectDuration * self.tolerance)):
                 # roi 안에 디텍션이 되었을 때 detectFrames 카운트
                 self.detectFrames += 1
                 print("There is something")
