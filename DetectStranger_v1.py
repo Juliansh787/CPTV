@@ -73,7 +73,7 @@ class WatchingStranger():
         '''
         :return: roi should be returned nparray for if brunch in main func
         '''
-        fps = cap.get(cv2.CAP_PROP_FPS)
+        self.fps = cap.get(cv2.CAP_PROP_FPS)
         roi = np.zeros(shape=5)
 
         # 배경 제거 마스크 계산
@@ -95,7 +95,7 @@ class WatchingStranger():
                                                           np.where(self.x < self.roiChk[:, 1]) and              # 1열 (x값 이상)
                                                           np.where(self.roiChk[:, 1] < (self.x + self.w)))]     # 1열 (x+w값 이하)
                 if self.movementInROI.size > 0:     # roi내에서 움직임 검출
-                    if not self.detection and not self.tracking and (self.detectFrames < (fps * self.detectDuration * self.tolerance)):
+                    if not self.detection and not self.tracking and (self.detectFrames < (self.fps * self.detectDuration * self.tolerance)):
                         # roi 안에 디텍션이 되었을 때 detectFrames 카운트
                         self.detectFrames += 1
                         print("There is something")
@@ -256,6 +256,7 @@ class WatchingStranger():
                 cv2.putText(frame, 'Target Place', self.originROI[0], cv2.FONT_HERSHEY_PLAIN, 2, self.roiColor, 2)
                 cv2.imshow('frame', frame)
                 cv2.imshow('bgsub', self.fgmask)
+
                 if cv2.waitKey(1) & 0xff == 27:
                     break
         except Exception as e:
