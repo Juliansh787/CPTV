@@ -208,7 +208,7 @@ class WatchingStranger():
 
             p1 = (int(newbox[0]), int(newbox[1]))
             p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
-            cv2.rectangle(frame, p1, p2, self.dangerColor, 2, 1)        # stranger tracker 사각형 그리기
+            cv2.rectangle(frame, p1, p2, self.dangerColor, 3, 1)        # stranger tracker 사각형 그리기
             cv2.putText(frame, '{0:0.1f} Sec'.format((time.time() - self.trackingStartTime)),
                         (int(newbox[0]), int(newbox[1]) + 30), cv2.FONT_HERSHEY_PLAIN, 2, self.dangerColor, 3)
 
@@ -246,7 +246,8 @@ class WatchingStranger():
                     self.tracking = False
                     # send socket message
 
-                cv2.rectangle(frame, self.originROI[0], self.originROI[1], self.roiColor, 3)  # 기존 roi 사각형 그리기
+                cv2.rectangle(frame, self.originROI[0], self.originROI[1], self.roiColor, 2)  # 기존 roi 사각형 그리기
+                cv2.putText(frame, 'Target Place', self.originROI[0], cv2.FONT_HERSHEY_PLAIN, 2, self.roiColor, 2)
                 cv2.imshow('frame', frame)
                 cv2.imshow('bgsub', self.fgmask)
                 if cv2.waitKey(1) & 0xff == 27:
