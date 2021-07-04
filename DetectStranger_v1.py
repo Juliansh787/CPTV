@@ -30,7 +30,7 @@ class WatchingStranger():
             self.originROI = [(self.x, self.y), (self.x+self.w, self.y+self.h)]
         cv2.destroyAllWindows()
 
-        # 배경 제거 객체 생성 --- ①
+        # 배경 제거 객체 생성
         self.fgbg = cv2.createBackgroundSubtractorMOG2(varThreshold=100)
 
         self.detectTime = 0
