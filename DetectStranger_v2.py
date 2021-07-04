@@ -2,7 +2,8 @@ import cv2
 import numpy as np
 import time
 
-cap = cv2.VideoCapture('sample.mp4')
+cap = cv2.VideoCapture('fight.mp4')
+# cap = cv2.VideoCapture('sample.mp4')
 # cap = cv2.VideoCapture(0)
 
 class WatchingStranger():
@@ -25,6 +26,7 @@ class WatchingStranger():
 
         ret, frame = cap.read()
 
+        self.height, self.width, self.channels = frame.shape
         self.x, self.y, self.w, self.h = cv2.selectROI('DangerROI', frame, False)
         if self.w and self.h:
             self.originROI = [(self.x, self.y), (self.x+self.w, self.y+self.h)]
@@ -113,7 +115,6 @@ class WatchingStranger():
         roi = []
 
         if len(frame):
-            # img = cv2.resize(img, None, fx=0.32, fy=0.32)   # 이미지 사이즈 저장된 크기로 조절해주기
             height, width, channels = frame.shape
 
             # Detecting objects locations(outs)
@@ -156,7 +157,9 @@ class WatchingStranger():
                 if i in indexes:
                     label = str(self.classes[class_ids[i]])
                     if label == 'person':
-                        roi.append([self.x, self.y, self.w, self.h])
+                        x, y, w, h = boxes[i]
+                        roi.append([self.x+x, self.y+y, w, h])
+                        break
             if roi:
                 # Select boxes
                 bboxes = []
