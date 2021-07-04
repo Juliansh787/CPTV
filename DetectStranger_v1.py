@@ -162,7 +162,9 @@ class WatchingStranger():
                 if i in indexes:
                     label = str(self.classes[class_ids[i]])
                     if label == 'person':
-                        roi.append([self.x, self.y, self.w, self.h])
+                        x, y, w, h = boxes[i]
+                        roi.append([self.x+x, self.y+y, w, h])
+                        break
             if roi:
                 # Select boxes
                 bboxes = []
