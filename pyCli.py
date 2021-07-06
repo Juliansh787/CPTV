@@ -1,7 +1,7 @@
 import cv2
 import time
 
-class RecordVideo():
+class RecordingVideo():
     def __init__(self, saveTime=30):
         self.saveTime = saveTime
 
