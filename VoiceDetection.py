@@ -1,5 +1,26 @@
-import time
+from socket import *
+import struct
 import speech_recognition as sr
+
+# socket
+HOST = '127.0.0.1'
+PORT = 10000
+BUFSIZE = 12
+ADDR = (HOST, PORT)
+
+def protocolMsg(id, level, length, data=None):
+    # protocol message
+    preamble = b'\x43\x50\x54\x56'  # ascii CPTV
+    id = bytes([int(id)])  # camera id
+    level = bytes([int(level)])  # danger behavior level
+    length = struct.pack(">I", int(length)) # big endian
+    header = preamble + id + level + length
+    message = header
+
+    if data:
+        message += data
+
+    return message
 
 class VoiceDetection():
     def __init__(self, socket):
@@ -50,3 +71,14 @@ class VoiceDetection():
                 self.parseVoice()
         except Exception as e:
             print(e)
+
+if __name__ == '__main__':
+    clientSocket = socket(AF_INET, SOCK_STREAM)# 서버에 접속하기 위한 소켓을 생성한다.\
+    clientSocket.connect(ADDR)  # 서버에 접속을 시도한다.
+    clientSocket.send('Hello!'.encode())  # 서버에 메시지 전달
+
+    p2 = VoiceDetection(clientSocket)
+    p2.main()
+
+    # 소켓 종료
+    socket.close()
