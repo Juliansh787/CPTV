@@ -6,12 +6,11 @@ import CPTV
 # socket
 HOST = '127.0.0.1'
 PORT = 2204
-# BUFSIZE = 12
 ADDR = (HOST, PORT)
 
 if __name__ == '__main__':
     try:
-        clientSocket = socket(AF_INET, SOCK_STREAM)# 서버에 접속하기 위한 소켓을 생성한다.\
+        clientSocket = socket(AF_INET, SOCK_STREAM)     # 서버에 접속하기 위한 소켓을 생성한다.
         clientSocket.connect(ADDR)  # 서버에 접속을 시도한다.
         print('Socket connect')
 
