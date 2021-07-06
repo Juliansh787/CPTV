@@ -1,4 +1,3 @@
-from socket import *
 import struct
 import cv2
 import numpy as np
@@ -6,8 +5,8 @@ import time
 import speech_recognition as sr
 
 # video
-cap = cv2.VideoCapture('fight.mp4')
-# cap = cv2.VideoCapture('sample.mp4')
+# cap = cv2.VideoCapture('data/fight.mp4')
+cap = cv2.VideoCapture('data/sample.mp4')
 # cap = cv2.VideoCapture(0)
 
 def protocolMsg(id, level, length, data=None):
@@ -37,9 +36,9 @@ class WatchingStranger():
         self.dangerColor = (0, 0, 255)
 
         # Load Yolo
-        self.net = cv2.dnn.readNet("yolov3-spp.weights", "yolov3-spp.cfg")
+        self.net = cv2.dnn.readNet("yolo/yolov3-spp.weights", "yolo/yolov3-spp.cfg")
         self.classes = []
-        with open("coco.names", "r") as f:
+        with open("yolo/coco.names", "r") as f:
             self.classes = [line.strip() for line in f.readlines()]
         self.layer_names = self.net.getLayerNames()
         self.output_layers = [self.layer_names[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
@@ -222,11 +221,11 @@ class WatchingStranger():
         for i, newbox in enumerate(boxes):
             # 60초에 한 번 tracking 중인 객체가 사람인지 아닌지 판단
             # 프레임에서 벗어났다면 사람이 아니라고 정의
-            if (time.time()-self.trackingStartTime)%60 < 0:
-                x = int(boxes[0][0])
-                y = int(boxes[0][1])
-                w = int(boxes[0][2])
-                h = int(boxes[0][3])
+            if (time.time()-self.trackingStartTime)%5 < 1:
+                x = int(newbox[0:1])
+                y = int(newbox[1:2])
+                w = int(newbox[2:3])
+                h = int(newbox[3:4])
                 reChkROI = frame[y:y + h, x:x + w]
                 if not self.DetectHuman(reChkROI):
                     self.tracking = False
@@ -271,6 +270,11 @@ class WatchingStranger():
                     multiTracker = 0
                     self.tracking = False
                     self.socket.send(self.message)
+
+                if not self.tracking:
+                    bboxes = []
+                    chaseTime = 0
+                    multiTracker = 0
 
                 cv2.rectangle(frame, self.originROI[0], self.originROI[1], self.roiColor, 2)  # 기존 roi 사각형 그리기
                 cv2.putText(frame, 'Target Place', self.originROI[0], cv2.FONT_HERSHEY_PLAIN, 2, self.roiColor, 2)
