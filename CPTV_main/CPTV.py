@@ -62,6 +62,7 @@ class WatchingStranger():
         self.tolerance = 0.7
 
         self.trackingDuration = 120
+        self.reChkPeriod = 60
 
         # protocol message
         self.message = protocolMsg(id=1, level=1, length=0)
@@ -221,7 +222,7 @@ class WatchingStranger():
         for i, newbox in enumerate(boxes):
             # 60초에 한 번 tracking 중인 객체가 사람인지 아닌지 판단
             # 프레임에서 벗어났다면 사람이 아니라고 정의
-            if (time.time()-self.trackingStartTime)%5 < 1:
+            if (time.time()-self.trackingStartTime)%self.reChkPeriod < 1:
                 x = int(newbox[0:1])
                 y = int(newbox[1:2])
                 w = int(newbox[2:3])
