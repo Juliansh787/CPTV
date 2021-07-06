@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import time
 
-cap = cv2.VideoCapture('fight.mp4')
+cap = cv2.VideoCapture('sample2.mp4')
 # cap = cv2.VideoCapture('sample.mp4')
 # cap = cv2.VideoCapture(0)
 
@@ -158,7 +158,8 @@ class WatchingStranger():
                     label = str(self.classes[class_ids[i]])
                     if label == 'person':
                         x, y, w, h = boxes[i]
-                        roi.append([self.x+x, self.y+y, w, h])
+                        # 프레임에 맞추기 위한 roi 위치 조작
+                        roi.append([self.x+x-20, self.y+y-15, w*2, h])
                         break
             if roi:
                 # Select boxes
@@ -199,15 +200,16 @@ class WatchingStranger():
         for i, newbox in enumerate(boxes):
             # 60초에 한 번 tracking 중인 객체가 사람인지 아닌지 판단
             # 프레임에서 벗어났다면 사람이 아니라고 정의
-            if (time.time()-self.trackingStartTime)%60 < 0:
-                x = int(boxes[0][0])
-                y = int(boxes[0][1])
-                w = int(boxes[0][2])
-                h = int(boxes[0][3])
+            if (time.time()-self.trackingStartTime)%5 < 1:
+                x = int(newbox[0:1])
+                y = int(newbox[1:2])
+                w = int(newbox[2:3])
+                h = int(newbox[3:4])
                 reChkROI = frame[y:y + h, x:x + w]
                 if not self.DetectHuman(reChkROI):
                     self.tracking = False
                     chaseTime = 0
+                    break
 
             p1 = (int(newbox[0]), int(newbox[1]))
             p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
@@ -218,47 +220,52 @@ class WatchingStranger():
         return chaseTime
 
     def main(self):
-        try:
-            bboxes = []
-            chaseTime = 0
-            multiTracker = 0
+        # try:
+        bboxes = []
+        chaseTime = 0
+        multiTracker = 0
 
-            while cap.isOpened():
-                ret, frame = cap.read()
-                if not ret:
-                    break
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-                roi = self.CheckStranger(frame)
+            roi = self.CheckStranger(frame)
 
-                if (roi.mean() != 0) and not self.tracking:
-                    bboxes = self.DetectHuman(roi)
+            if (roi.mean() != 0) and not self.tracking:
+                bboxes = self.DetectHuman(roi)
 
-                if bboxes and not self.tracking:
-                    multiTracker = self.CreateTracker(frame, bboxes)
-                    self.trackingStartTime = time.time()
-                    print('DANGEROUS!!!')
+            if bboxes and not self.tracking:
+                multiTracker = self.CreateTracker(frame, bboxes)
+                self.trackingStartTime = time.time()
+                print('DANGEROUS!!!')
 
-                if multiTracker:
-                    chaseTime = self.TraceStranger(frame, multiTracker)
+            if multiTracker:
+                chaseTime = self.TraceStranger(frame, multiTracker)
 
-                if chaseTime > self.trackingDuration:
-                    print('Really Really DANGEROUS!!!')
-                    bboxes = []
-                    chaseTime = 0
-                    multiTracker = 0
-                    self.tracking = False
-                    # send socket message
+            if chaseTime > self.trackingDuration:
+                print('Really Really DANGEROUS!!!')
+                bboxes = []
+                chaseTime = 0
+                multiTracker = 0
+                self.tracking = False
+                # send socket message
 
-                cv2.rectangle(frame, self.originROI[0], self.originROI[1], self.roiColor, 2)  # 기존 roi 사각형 그리기
-                cv2.putText(frame, 'Target Place', self.originROI[0], cv2.FONT_HERSHEY_PLAIN, 2, self.roiColor, 2)
-                cv2.imshow('frame', frame)
-                cv2.imshow('bgsub', self.fgmask)
-                if cv2.waitKey(1) & 0xff == 27:
-                    break
-        except Exception as e:
-            print(e)
-            cap.release()
-            cv2.destroyAllWindows()
+            if not self.tracking:
+                bboxes = []
+                chaseTime = 0
+                multiTracker = 0
+
+            cv2.rectangle(frame, self.originROI[0], self.originROI[1], self.roiColor, 2)  # 기존 roi 사각형 그리기
+            cv2.putText(frame, 'Target Place', self.originROI[0], cv2.FONT_HERSHEY_PLAIN, 2, self.roiColor, 2)
+            cv2.imshow('frame', frame)
+            cv2.imshow('bgsub', self.fgmask)
+            if cv2.waitKey(1) & 0xff == 27:
+                break
+        # except Exception as e:
+        #     print(e)
+        #     cap.release()
+        #     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     p1 = WatchingStranger()
