@@ -58,11 +58,11 @@ class WatchingStranger():
         self.detection = False
         self.tracking = False
         self.detectFrames = 0
-        self.detectDuration = 5
+        self.detectDuration = 5     # roi에서 이상 행동 감지 정의 시간
         self.tolerance = 0.7
 
-        self.trackingDuration = 120
-        self.reChkPeriod = 60
+        self.trackingDuration = 120     # tracking 후 수상한 사람 정의 시간
+        self.reChkPeriod = 60       # tracking 객체 사람인지 아닌지 재탐색 주기
 
         # protocol message
         self.message = protocolMsg(id=1, level=1, length=0)
