@@ -13,7 +13,7 @@ if __name__ == '__main__':
     try:
         clientSocket = socket(AF_INET, SOCK_STREAM)# 서버에 접속하기 위한 소켓을 생성한다.\
         clientSocket.connect(ADDR)  # 서버에 접속을 시도한다.
-        clientSocket.send('Hello!'.encode())  # 서버에 메시지 전달
+        print('Socket connect')
 
         # 모듈 객체 생성
         p1 = CPTV.WatchingStranger(clientSocket)
