@@ -240,7 +240,7 @@ class WatchingStranger():
 
         return chaseTime
 
-    def main(self):
+    def main(self, tID):
         try:
             bboxes = []
             chaseTime = 0
@@ -326,7 +326,7 @@ class VoiceDetection():
             print(e)
             pass
 
-    def main(self):
+    def main(self, tID):
         try:
             while True:
                 self.parseVoice()
