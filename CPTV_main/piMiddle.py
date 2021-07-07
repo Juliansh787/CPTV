@@ -49,7 +49,7 @@ class RecordingVideo():
             recorder.release()
             cv2.destroyAllWindows()
         except Exception as e:
-            print(e)
+            print("recordCam : ", e)
             pass
 
     def main(self, tID):
@@ -66,13 +66,13 @@ class RecordingVideo():
 
         except Exception as e:
             self.cap.release()
-            print("RecordingVideo : ", e)
+            print("RecordingVideo main : ", e)
 
 class FTPClient():
     def __init__(self):
         # pi server
         # self.HOST = '127.0.0.1'
-        self.HOST = '192.168.0.6'
+        self.HOST = '192.168.0.42'
         self.PORT = 2204
         self.ADDR = (self.HOST, self.PORT)
         self.BUFSIZ = 10
@@ -125,7 +125,7 @@ class FTPClient():
                     self.curFin = False
                     message = 0
             except Exception as e:
-                print("FTPClient : ", e)
+                print("recvMsg : ", e)
 
     def SendData(self, filename, message):
         # saved file
@@ -152,7 +152,7 @@ class FTPClient():
 
             self.myfile.close()
         except Exception as e:
-            print(e)
+            print("SendData : ", e)
             pass
 
         self.ftp.close
@@ -176,4 +176,4 @@ if __name__ == '__main__':
             time.sleep(1)  # thread 간의 우선순위 관계 없이 다른 thread에게 cpu를 넘겨줌(1 일때)
             pass  # sleep(0)은 cpu 선점권을 풀지 않음
     except Exception as e:
-        print(e)
+        print("__main__ : ", e)
