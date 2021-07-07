@@ -6,7 +6,7 @@ import speech_recognition as sr
 
 # video
 # cap = cv2.VideoCapture('data/fight.mp4')
-cap = cv2.VideoCapture('data/sample.mp4')
+cap = cv2.VideoCapture('data/sample2.mp4')
 # cap = cv2.VideoCapture(0)
 
 def protocolMsg(id, level, length, data=None):
@@ -181,7 +181,7 @@ class WatchingStranger():
                     label = str(self.classes[class_ids[i]])
                     if label == 'person':
                         x, y, w, h = boxes[i]
-                        roi.append([self.x+x, self.y+y, w, h])
+                        roi.append([self.x+x-20, self.y+y-15, w*2, h])
                         break
             if roi:
                 # Select boxes
