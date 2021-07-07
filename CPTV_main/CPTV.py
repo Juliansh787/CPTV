@@ -114,6 +114,7 @@ class WatchingStranger():
         ret, self.fgmask = cv2.threshold(closing, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         if self.fgmask.mean() != 127:
+            # Frame*tolerance 이상의 프레임 탐지시 검출
             if not self.detection and not self.tracking and (self.detectFrames < (self.fps * self.detectDuration * self.tolerance)):
                 # roi 안에 디텍션이 되었을 때 detectFrames 카운트
                 self.detectFrames += 1
@@ -125,7 +126,7 @@ class WatchingStranger():
                 self.detectTime = time.time()
                 print("Tic Toc")
 
-            # Stranger Detection의 Definition은 detectDuration 시간 중 tolerance 이상 움직임이 감지된 경우
+            # Stranger Detection의 Definition은 detectDuration 시간 이상 움직임이 감지된 경우
             if self.detection and ((time.time() - self.detectTime) > self.detectDuration):
                 self.detectFrames = 0
                 self.detection = False
