@@ -11,6 +11,7 @@ class RecordingVideo():
     def __init__(self, saveTime=30):
         self.saveTime = saveTime
 
+        # self.cap = cv2.VideoCapture("data/sample2.mp4")
         self.cap = cv2.VideoCapture(0)
 
         if not self.cap.isOpened():
@@ -117,6 +118,7 @@ class FTPClient():
                         self.SendData(VIDEO_STATE, message)
                         self.curFin = True
                     SEND_WAIT = False
+
                 if self.prevFin and self.curFin:
                     self.prevFin = False
                     self.curFin = False
