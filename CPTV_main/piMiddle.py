@@ -66,12 +66,13 @@ class RecordingVideo():
 
         except Exception as e:
             self.cap.release()
-            print(e)
+            print("RecordingVideo : ", e)
 
 class FTPClient():
     def __init__(self):
         # pi server
-        self.HOST = '127.0.0.1'
+        # self.HOST = '127.0.0.1'
+        self.HOST = '192.168.0.6'
         self.PORT = 2204
         self.ADDR = (self.HOST, self.PORT)
         self.BUFSIZ = 10
@@ -89,7 +90,7 @@ class FTPClient():
         print('accept')
 
         # for Web server
-        self.WEB_HOST = '127.0.0.1'
+        self.WEB_HOST = '192.168.0.6'
         self.WEB_PORT = 21
 
         # for Web FTP server
@@ -124,7 +125,7 @@ class FTPClient():
                     self.curFin = False
                     message = 0
             except Exception as e:
-                print(e)
+                print("FTPClient : ", e)
 
     def SendData(self, filename, message):
         # saved file
