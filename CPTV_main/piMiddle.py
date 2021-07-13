@@ -1,5 +1,5 @@
 from socket import *
-import ftplib
+import os
 import threading
 import cv2
 import time
@@ -55,47 +55,44 @@ class RecordingVideo():
     def main(self, tID):
         global VIDEO_STATE
 
-        try:
-            while True:  # 무한 루프
+        while True:  # 무한 루프
+            try:
                 if VIDEO_STATE == 'cur' and not SEND_WAIT:
                     self.recordCam('prev')
                     VIDEO_STATE = 'prev'
                 elif VIDEO_STATE == 'prev' and not SEND_WAIT:
                     self.recordCam('cur')
                     VIDEO_STATE = 'cur'
+            except Exception as e:
+                # self.cap.release()
+                # self.cap = cv2.VideoCapture(0)
+                print("RecordingVideo main : ", e)
 
-        except Exception as e:
-            self.cap.release()
-            print("RecordingVideo main : ", e)
-
-class FTPClient():
+class WebClient():
     def __init__(self):
+        # for Web client
+        self.WEB_HOST = '192.168.0.6'
+        self.WEB_PORT = 22042
+        self.WEB_ADDR = (self.WEB_HOST, self.WEB_PORT)
+        self.webClient = socket(AF_INET, SOCK_STREAM)  # 서버에 접속하기 위한 소켓을 생성한다.
+        self.webClient.connect(self.WEB_ADDR)  # 서버에 접속을 시도한다.
+        print('Web Socket connect!')
+
         # pi server
         # self.HOST = '127.0.0.1'
-        self.HOST = '192.168.0.42'
+        self.HOST = '192.168.0.6'
         self.PORT = 2204
         self.ADDR = (self.HOST, self.PORT)
-        self.BUFSIZ = 10
+        self.BUFSIZ = 16
 
         # server socket for jetson nano
         self.serverSocket = socket(AF_INET, SOCK_STREAM)
-        # 소켓 주소 정보 할당
         self.serverSocket.bind(self.ADDR)
         print('bind')
-        # 연결 수신 대기 상태
         self.serverSocket.listen(100)
         print('listen')
-        # 연결 수락
         self.clientSocket, addr_info = self.serverSocket.accept()
         print('accept')
-
-        # for Web server
-        self.WEB_HOST = '192.168.0.6'
-        self.WEB_PORT = 21
-
-        # for Web FTP server
-        self.id = 'CPTV_admin'
-        self.passwd = '2204'
 
         self.prevFin = False
         self.curFin = False
@@ -124,44 +121,49 @@ class FTPClient():
                     self.prevFin = False
                     self.curFin = False
                     message = 0
+
+                print("Recording")
+
             except Exception as e:
                 print("recvMsg : ", e)
+                pass
 
     def SendData(self, filename, message):
         # saved file
         filename = filename + 'Cam.mp4'
-
         self.msgDictionary = ({'preamble': message[0:4],
                                'id': message[4],
                                'level': message[5],
                                'length': message[6:10]})
 
-        self.ftp = ftplib.FTP()
-        self.ftp.connect(self.WEB_HOST, self.WEB_PORT)
-        self.ftp.login(self.id, self.passwd)
-        self.ftp.cwd("./")
+        # message 파싱 후 ftp 파일 업로드 하고 이름을 파싱한 대로 변경하기
+        newFileName = str(time.time()) + '_' + str(self.msgDictionary['id']) + \
+                      '_' + str(self.msgDictionary['level']) + '.mp4'
+
+        self.webClient.send(newFileName.encode())
+        self.webClient.recv(self.BUFSIZ)
 
         try:    # 파일 없는 초기 경우 예외처리
-            self.myfile = open(filename, 'rb')
-            self.ftp.storbinary('STOR ' + filename, self.myfile)
+            f = open(filename, 'rb')
+            filesize = os.path.getsize(filename)
+            self.webClient.send(str(filesize).encode())
 
-            # message 파싱 후 ftp 파일 업로드 하고 이름을 파싱한 대로 변경하기
-            newFileName = str(time.time()) + '_' + str(self.msgDictionary['id']) + \
-                          '_' + str(self.msgDictionary['level']) + '.mp4'
-            self.ftp.rename(filename, newFileName)
+            startSending = self.webClient.recv(self.BUFSIZ).decode()
+            if startSending == 'start':
+                data = f.read(filesize)
+                self.webClient.send(data)
+                f.close()
 
-            self.myfile.close()
+                print("Send Complete")
         except Exception as e:
             print("SendData : ", e)
             pass
-
-        self.ftp.close
 
 if __name__ == '__main__':
     try:
         # record video and audio
         p1 = RecordingVideo(saveTime=3)
-        p2 = FTPClient()
+        p2 = WebClient()
 
         # Threading
         t1 = threading.Thread(target=p1.main, args=(1,))
