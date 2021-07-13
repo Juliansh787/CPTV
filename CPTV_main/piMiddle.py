@@ -72,7 +72,7 @@ class WebClient():
     def __init__(self):
         # for Web client
         self.WEB_HOST = '192.168.0.6'
-        self.WEB_PORT = 22042
+        self.WEB_PORT = 22041
         self.WEB_ADDR = (self.WEB_HOST, self.WEB_PORT)
         self.webClient = socket(AF_INET, SOCK_STREAM)  # 서버에 접속하기 위한 소켓을 생성한다.
         self.webClient.connect(self.WEB_ADDR)  # 서버에 접속을 시도한다.
@@ -80,8 +80,8 @@ class WebClient():
 
         # pi server
         # self.HOST = '127.0.0.1'
-        self.HOST = '192.168.0.6'
-        self.PORT = 2204
+        self.HOST = '192.168.0.42'
+        self.PORT = 22042
         self.ADDR = (self.HOST, self.PORT)
         self.BUFSIZ = 16
 
