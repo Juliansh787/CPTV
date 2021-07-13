@@ -4,8 +4,8 @@ import time
 import CPTV
 
 # socket
-HOST = '127.0.0.1'
-PORT = 2204
+HOST = '192.168.0.42'
+PORT = 22042
 ADDR = (HOST, PORT)
 
 if __name__ == '__main__':
