@@ -1,4 +1,3 @@
-import threading
 import CPTV
 
 if __name__ == '__main__':
@@ -25,4 +24,3 @@ if __name__ == '__main__':
     #
     # for th in threads:
     #     th.join()
-
