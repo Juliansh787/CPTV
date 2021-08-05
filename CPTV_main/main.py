@@ -1,6 +1,5 @@
 import threading
 from socket import *
-import time
 import CPTV
 
 # socket
