@@ -27,7 +27,7 @@ def protocolMsg(id, level, length, data=None):
     return message
 
 class WatchingStranger():
-    def __init__(self, socket):
+    def __init__(self, socket=None):
         self.socket = socket
 
         # tracker list
@@ -277,7 +277,8 @@ class WatchingStranger():
                     chaseTime = 0
                     multiTracker = 0
                     self.tracking = False
-                    self.socket.send(self.message)
+                    if self.socket != None:
+                        self.socket.send(self.message)
 
                 if not self.tracking:
                     bboxes = []
@@ -297,7 +298,7 @@ class WatchingStranger():
             cap.release()
 
 class DetectingViolence():
-    def __init__(self, socket):
+    def __init__(self, socket=None):
         self.socket = socket
 
         # Load fight model
@@ -372,7 +373,8 @@ class DetectingViolence():
                             print(label)    # test
                             x, y, w, h = boxes[i]   # test
                             cv2.rectangle(frame, (x, y), (x + w, y + h), self.dangerColor, 3, 1)  # stranger tracker 사각형 그리기, test
-                            self.socket.send(self.message)  # test
+                            if self.socket != None:
+                                self.socket.send(self.message)
                             break
 
             cv2.imshow('fight', frame)  # test
@@ -383,7 +385,7 @@ class DetectingViolence():
         self.DetectFight()
 
 class VoiceDetection():
-    def __init__(self, socket):
+    def __init__(self, socket=None):
         self.socket = socket
 
         self.init_rec = sr.Recognizer()
@@ -417,8 +419,9 @@ class VoiceDetection():
                 for word in sign:  # sign 리스트 인덱스 요소를 하나식 반환
                     wordDetection = list(filter(lambda x: word in x, self.wordList))
                     if wordDetection:
-                        self.socket.send(self.message)
-                        print(word)
+                        if self.socket != None:
+                            self.socket.send(self.message)
+                        print(word)     # test
                         break
 
         except Exception as e:
