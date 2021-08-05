@@ -4,7 +4,7 @@ import time
 import CPTV
 
 # socket
-HOST = '192.168.0.42'
+HOST = '192.168.0.6'
 PORT = 22042
 ADDR = (HOST, PORT)
 
@@ -16,20 +16,22 @@ if __name__ == '__main__':
 
         # 모듈 객체 생성
         p1 = CPTV.WatchingStranger(clientSocket)
-        p2 = CPTV.VoiceDetection(clientSocket)
+        p2 = CPTV.DetectingViolence(clientSocket)
+        p3 = CPTV.VoiceDetection(clientSocket)
 
         # Threading
         t1 = threading.Thread(target=p1.main, args=(1,))
         t2 = threading.Thread(target=p2.main, args=(2,))
-        t1.daemon = True
-        t2.daemon = True
+        t3 = threading.Thread(target=p3.main, args=(3,))
 
-        t1.start()
-        t2.start()
+        threads = [t1, t2, t3]
 
-        while True:
-            time.sleep(1)  # thread 간의 우선순위 관계 없이 다른 thread에게 cpu를 넘겨줌(1 일때)
-            pass  # sleep(0)은 cpu 선점권을 풀지 않음
+        for th in threads:
+            th.daemon = True
+            th.start()
+
+        for th in threads:
+            th.join()
 
     except Exception as e:
         # 소켓 종료
