@@ -7,6 +7,8 @@ import time
 VIDEO_STATE = 'cur'
 SEND_WAIT = False
 
+SEM = threading.Semaphore(1)
+
 class RecordingVideo():
     def __init__(self, saveTime=30):
         self.saveTime = saveTime
@@ -80,7 +82,7 @@ class WebClient():
 
         # pi server
         # self.HOST = '127.0.0.1'
-        self.HOST = '192.168.0.42'
+        self.HOST = '192.168.0.6'
         self.PORT = 22042
         self.ADDR = (self.HOST, self.PORT)
         self.BUFSIZ = 16
@@ -109,12 +111,16 @@ class WebClient():
 
                 if message:
                     SEND_WAIT = True
+                    SEM.acquire()
+
                     if VIDEO_STATE=='prev' and not self.prevFin:
                         self.SendData(VIDEO_STATE, message)
                         self.prevFin = True
                     elif VIDEO_STATE=='cur' and not self.curFin:
                         self.SendData(VIDEO_STATE, message)
                         self.curFin = True
+
+                    SEM.release()
                     SEND_WAIT = False
 
                 if self.prevFin and self.curFin:
@@ -168,14 +174,15 @@ if __name__ == '__main__':
         # Threading
         t1 = threading.Thread(target=p1.main, args=(1,))
         t2 = threading.Thread(target=p2.recvMsg, args=(2,))
-        t1.daemon = True
-        t2.daemon = True
 
-        t1.start()
-        t2.start()
+        threads = [t1, t2]
 
-        while True:
-            time.sleep(1)  # thread 간의 우선순위 관계 없이 다른 thread에게 cpu를 넘겨줌(1 일때)
-            pass  # sleep(0)은 cpu 선점권을 풀지 않음
+        for th in threads:
+            th.daemon = True
+            th.start()
+
+        for th in threads:
+            th.join()
+
     except Exception as e:
         print("__main__ : ", e)
