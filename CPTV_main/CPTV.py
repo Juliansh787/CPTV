@@ -1,9 +1,10 @@
 import struct
+import time
+import threading
+
 import cv2
 import numpy as np
-import time
 import speech_recognition as sr
-import threading
 
 SEM = threading.Semaphore(1)
 
