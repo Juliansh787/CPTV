@@ -3,10 +3,13 @@ import cv2
 import numpy as np
 import time
 import speech_recognition as sr
+import threading
+
+SEM = threading.Semaphore(1)
 
 # video
-# cap = cv2.VideoCapture('data/fight.mp4')
-cap = cv2.VideoCapture('data/sample2.mp4')
+cap = cv2.VideoCapture('data/fight_sample.mp4')
+# cap = cv2.VideoCapture('data/sample2.mp4')
 # cap = cv2.VideoCapture(0)
 
 def protocolMsg(id, level, length, data=None):
@@ -36,12 +39,12 @@ class WatchingStranger():
         self.dangerColor = (0, 0, 255)
 
         # Load Yolo
-        self.net = cv2.dnn.readNet("yolo/yolov3-spp.weights", "yolo/yolov3-spp.cfg")
-        self.classes = []
+        self.net_human = cv2.dnn.readNet("yolo/yolov3-spp.weights", "yolo/yolov3-spp.cfg")
+        self.classes_human = []
         with open("yolo/coco.names", "r") as f:
-            self.classes = [line.strip() for line in f.readlines()]
-        self.layer_names = self.net.getLayerNames()
-        self.output_layers = [self.layer_names[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
+            self.classes_human = [line.strip() for line in f.readlines()]
+        self.layer_names_human = self.net_human.getLayerNames()
+        self.output_layers_human = [self.layer_names_human[i[0] - 1] for i in self.net_human.getUnconnectedOutLayers()]
 
         ret, frame = cap.read()
 
@@ -124,14 +127,14 @@ class WatchingStranger():
                 self.detection = True
                 self.detectFrames = 0
                 self.detectTime = time.time()
-                print("Tic Toc")
+                print("Tic Toc")    # test
 
             # Stranger Detection의 Definition은 detectDuration 시간 이상 움직임이 감지된 경우
             if self.detection and ((time.time() - self.detectTime) > self.detectDuration):
                 self.detectFrames = 0
                 self.detection = False
                 roi = roiFrame
-                print("Try to Detect Human obj")
+                print("Try to Detect Human obj")    # test
 
         return roi
 
@@ -143,8 +146,8 @@ class WatchingStranger():
 
             # Detecting objects locations(outs)
             blob = cv2.dnn.blobFromImage(frame, 0.00392, (320, 320), (0, 0, 0), True, crop=False)
-            self.net.setInput(blob)
-            outs = self.net.forward(self.output_layers)
+            self.net_human.setInput(blob)
+            outs = self.net_human.forward(self.output_layers_human)
 
             # Showing informations on the screen
             class_ids = []
@@ -179,7 +182,7 @@ class WatchingStranger():
             # font = cv2.FONT_HERSHEY_PLAIN
             for i in range(len(boxes)):
                 if i in indexes:
-                    label = str(self.classes[class_ids[i]])
+                    label = str(self.classes_human[class_ids[i]])
                     if label == 'person':
                         x, y, w, h = boxes[i]
                         roi.append([self.x+x-20, self.y+y-15, w*2, h])
@@ -248,7 +251,10 @@ class WatchingStranger():
             multiTracker = 0
 
             while cap.isOpened():
+                SEM.acquire()
                 ret, frame = cap.read()
+                SEM.release()
+
                 if not ret:
                     break
 
@@ -260,13 +266,13 @@ class WatchingStranger():
                 if bboxes and not self.tracking:
                     multiTracker = self.CreateTracker(frame, bboxes)
                     self.trackingStartTime = time.time()
-                    print('DANGEROUS!!!')
+                    print('DANGEROUS!!!')   # test
 
                 if multiTracker:
                     chaseTime = self.TraceStranger(frame, multiTracker)
 
                 if chaseTime > self.trackingDuration:
-                    print('Really Really DANGEROUS!!!')
+                    print('Really Really DANGEROUS!!!') # test
                     bboxes = []
                     chaseTime = 0
                     multiTracker = 0
@@ -278,16 +284,103 @@ class WatchingStranger():
                     chaseTime = 0
                     multiTracker = 0
 
-                cv2.rectangle(frame, self.originROI[0], self.originROI[1], self.roiColor, 2)  # 기존 roi 사각형 그리기
-                cv2.putText(frame, 'Target Place', self.originROI[0], cv2.FONT_HERSHEY_PLAIN, 2, self.roiColor, 2)
-                cv2.imshow('frame', frame)
-                cv2.imshow('bgsub', self.fgmask)
-                if cv2.waitKey(1) & 0xff == 27:
-                    break
+                cv2.rectangle(frame, self.originROI[0], self.originROI[1], self.roiColor, 2)  # 기존 roi 사각형 그리기, test
+                cv2.putText(frame, 'Target Place', self.originROI[0], cv2.FONT_HERSHEY_PLAIN, 2, self.roiColor, 2)  # test
+                cv2.imshow('stranger', frame)   # test
+                cv2.imshow('bgsub', self.fgmask)    # test
+                if cv2.waitKey(1) & 0xff == 27: # test
+                    break   # test
+
         except Exception as e:
             print(e)
             cv2.destroyAllWindows()
             cap.release()
+
+class DetectingViolence():
+    def __init__(self, socket):
+        self.socket = socket
+
+        # Load fight model
+        self.net_fight = cv2.dnn.readNet("yolo/fight.weights", "yolo/fight.cfg")
+        self.classes_fight = []
+        with open("yolo/fight.names", "r") as f:
+            self.classes_fight = [line.strip() for line in f.readlines()]
+        self.layer_names_fight = self.net_fight.getLayerNames()
+        self.output_layers_fight = [self.layer_names_fight[i[0] - 1] for i in self.net_fight.getUnconnectedOutLayers()]
+
+        # set rectangle color
+        self.dangerColor = (0, 0, 255)
+
+        # protocol message
+        self.message = protocolMsg(id=1, level=4, length=0)
+
+    def DetectFight(self):
+        stime = time.time()
+
+        while cap.isOpened():
+            SEM.acquire()
+            ret, frame = cap.read()
+            SEM.release()
+
+            if not ret:
+                break
+
+            # if len(frame) and (time.time()-stime) % 1.5 < 1:
+            if (time.time()-stime) % 1.5 < 1:
+                height, width, channels = frame.shape
+
+                # Detecting objects locations(outs)
+                blob = cv2.dnn.blobFromImage(frame, 0.00392, (320, 320), (0, 0, 0), True, crop=False)
+                self.net_fight.setInput(blob)
+                outs = self.net_fight.forward(self.output_layers_fight)
+
+                # Showing informations on the screen
+                class_ids = []
+                confidences = []
+                boxes = []
+                for out in outs:
+                    for detection in out:
+                        scores = detection[5:]
+                        class_id = np.argmax(scores)
+                        confidence = scores[class_id]
+                        if confidence > 0.5:
+                            # Object detected
+                            center_x = int(detection[0] * width)
+                            center_y = int(detection[1] * height)
+                            w = int(detection[2] * width)
+                            h = int(detection[3] * height)
+                            # Rectangle coordinates
+                            x = int(center_x - w / 2)
+                            y = int(center_y - h / 2)
+                            boxes.append([x, y, w, h])
+                            confidences.append(float(confidence))
+                            class_ids.append(class_id)
+
+                # 노이즈제거 => 같은 물체에 대한 박스가 많은것을 제거(Non maximum suppresion)
+                indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+
+                '''
+                Box : 감지된 개체를 둘러싼 사각형의 좌표
+                Label : 감지된 물체의 이름
+                Confidence : 0에서 1까지의 탐지에 대한 신뢰도
+                '''
+                # font = cv2.FONT_HERSHEY_PLAIN
+                for i in range(len(boxes)):
+                    if i in indexes:
+                        label = str(self.classes_fight[class_ids[i]])
+                        if label == 'fight':
+                            print(label)    # test
+                            x, y, w, h = boxes[i]   # test
+                            cv2.rectangle(frame, (x, y), (x + w, y + h), self.dangerColor, 3, 1)  # stranger tracker 사각형 그리기, test
+                            self.socket.send(self.message)  # test
+                            break
+
+            cv2.imshow('fight', frame)  # test
+            if cv2.waitKey(1) & 0xff == 27:     # test
+                break       # test
+
+    def main(self, tID):
+        self.DetectFight()
 
 class VoiceDetection():
     def __init__(self, socket):
