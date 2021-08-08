@@ -1,7 +1,7 @@
 import socket                   # Import socket module
 
 s = socket.socket()             # Create a socket object
-host = '192.168.0.6'   # Get local machine name
+host = '127.0.0.1'              # Get local machine name
 port = 22041                    # Reserve a port for your service every new transfer wants a new port or you must wait.
 s.bind((host, port))            # Bind to the port
 s.listen(5)  # Now wait for client connection.
