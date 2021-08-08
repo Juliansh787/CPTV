@@ -35,6 +35,8 @@ class RecordingVideo():
                 self.cap.release()
                 exit()
 
+            print("Recording...", state, "Cam.mp4")
+
             stime = time.time()
             while True:
                 if (time.time() - stime) > self.saveTime:
@@ -126,8 +128,6 @@ class WebClient():
                     self.prevFin = False
                     self.curFin = False
                     message = 0
-
-                print("Recording")
 
             except Exception as e:
                 print("recvMsg : ", e)
