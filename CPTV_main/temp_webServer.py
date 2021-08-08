@@ -1,4 +1,5 @@
 import socket                   # Import socket module
+import time
 
 s = socket.socket()             # Create a socket object
 host = '127.0.0.1'              # Get local machine name
@@ -13,11 +14,17 @@ while True:
     newName = conn.recv(64)
     if len(newName) > 0:
         newName = newName.decode()
+        newName = newName.split('_')
+        fileName = time.strftime('%Y-%m-%d_%I_%M_%S%p', time.localtime(float(newName[0]))) + "_" + newName[1] + "_" + newName[2]
+        print("File Name : ", fileName)
+
         conn.send('get'.encode())
         fsize = int(conn.recv(32).decode())
+        print("fsize : ", fsize)
+
         conn.send('start'.encode())
 
-        with open(newName, 'wb') as f:
+        with open(fileName, 'wb') as f:
             print('receiving data...')
 
             data = conn.recv(fsize)
