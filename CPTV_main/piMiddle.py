@@ -73,7 +73,7 @@ class RecordingVideo():
 class WebClient():
     def __init__(self):
         # for Web client
-        self.WEB_HOST = '192.168.0.6'
+        self.WEB_HOST = '127.0.0.1'
         self.WEB_PORT = 22041
         self.WEB_ADDR = (self.WEB_HOST, self.WEB_PORT)
         self.webClient = socket(AF_INET, SOCK_STREAM)  # 서버에 접속하기 위한 소켓을 생성한다.
@@ -81,8 +81,7 @@ class WebClient():
         print('Web Socket connect!')
 
         # pi server
-        # self.HOST = '127.0.0.1'
-        self.HOST = '192.168.0.6'
+        self.HOST = '127.0.0.1'
         self.PORT = 22042
         self.ADDR = (self.HOST, self.PORT)
         self.BUFSIZ = 16
@@ -168,7 +167,7 @@ class WebClient():
 if __name__ == '__main__':
     try:
         # record video and audio
-        p1 = RecordingVideo(saveTime=3)
+        p1 = RecordingVideo(saveTime=10)
         p2 = WebClient()
 
         # Threading
