@@ -1,0 +1,5 @@
+classes= 2
+train  = YOLO_weaponDetection/dataset/train.txt
+valid  = YOLO_weaponDetection/dataset/test.txt
+names = YOLO_weaponDetection/obj.names
+backup = YOLO_weaponDetection/backup/
